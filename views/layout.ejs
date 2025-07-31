@@ -1,0 +1,22 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <title>Secure Dashboard</title>
+</head>
+
+<body>
+    < % if (success_msg) { %>
+        <p style="color:green">
+            <%= success_msg %>
+        </p>
+        <% } %>
+            <% if (error_msg) { %>
+                <p style="color:red">
+                    <%= error_msg %>
+                </p>
+                <% } %>
+                    <%- body %>
+</body>
+
+</html>

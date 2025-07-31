@@ -1,0 +1,23 @@
+{
+  "name": "secure-dashboard",
+  "version": "1.0.0",
+  "description": "Secure user dashboard with login and profile management",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "stop": "killall -9 node || true",
+    "restart": "npm run stop && npm run start"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "crypto": "^1.0.1",
+    "ejs": "^3.1.9",
+    "escape-html": "^1.0.3",
+    "express": "^4.19.2",
+    "express-session": "^1.17.3",
+    "express-validator": "^7.2.1",
+    "mongoose": "^8.0.3",
+    "passport": "^0.7.0",
+    "passport-local": "^1.0.0"
+  }
+}

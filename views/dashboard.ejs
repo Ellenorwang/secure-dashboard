@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+</head>
+<body>
+    <h1>Welcome, <%= user.name || user.email %>!</h1>
+    <p><strong>Email:</strong> <%= user.email %></p>
+    <p><strong>Bio:</strong> <%= user.bio || 'No bio yet' %></p>
+
+    <a href="/profile">Edit Profile</a><br><br>
+    <a href="/logout">Logout</a>
+</body>
+</html>
