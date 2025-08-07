@@ -1,4 +1,4 @@
-#!/bin/bash
+
 PORT=3001
 PID=$(lsof -ti :$PORT)
 

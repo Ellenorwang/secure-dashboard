@@ -7,12 +7,16 @@ const bcrypt = require('bcryptjs');
 const path = require('path');
 const crypto = require('crypto');
 const { body, validationResult } = require('express-validator');
+const helmet = require('helmet');
+const csrf = require('csurf');
+const cookieParser = require('cookie-parser');
 const User = require('./models/User');
 
 const app = express();
 const PORT = 3001;
-const ENCRYPTION_KEY = crypto.scryptSync("secret-passphrase", 'salt', 32); // 32字节key
-const IV = Buffer.alloc(16, 0); // 初始化向量
+const ENCRYPTION_KEY = crypto.scryptSync("secret-passphrase", 'salt', 32);
+const IV = Buffer.alloc(16, 0);
+
 mongoose.connect('mongodb://localhost:27017/secure-dashboard', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
@@ -21,27 +25,45 @@ mongoose.connect('mongodb://localhost:27017/secure-dashboard', {
   .catch(err => console.error('❌ MongoDB connection error:', err));
 
 // =========================
-// Middleware
+// Security Middleware
 // =========================
+app.use(helmet());                       
+app.disable('x-powered-by');            
+app.use(cookieParser());                 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 
 // =========================
-// Session
+// Session Config
 // =========================
 app.use(session({
     secret: 'secret-key',
     resave: false,
-    saveUninitialized: false
+    saveUninitialized: false,
+    cookie: {
+        httpOnly: true,
+        secure: false,                  
+        sameSite: 'strict'            
+    }
 }));
+
+// =========================
+// CSRF Protection
+// =========================
+app.use(csrf({ cookie: true }));
+app.use((req, res, next) => {
+    res.locals.csrfToken = req.csrfToken(); // 所有视图中可使用 <%= csrfToken %>
+    next();
+});
+
+// =========================
+// Passport Config
+// =========================
 app.use(passport.initialize());
 app.use(passport.session());
 
-// =========================
-// Passport
-// =========================
 passport.use(new LocalStrategy({ usernameField: 'email' }, async (email, password, done) => {
     try {
         const user = await User.findOne({ email });
@@ -67,7 +89,7 @@ passport.deserializeUser(async (id, done) => {
 });
 
 // =========================
-// Encryption helpers
+// Encryption Helpers
 // =========================
 function encrypt(text) {
     const cipher = crypto.createCipheriv('aes-256-cbc', ENCRYPTION_KEY, IV);
@@ -105,23 +127,22 @@ app.get('/profile', isAuthenticated, (req, res) => {
 });
 
 // Register POST
-app.post('/register', async (req, res) => {
+app.post('/register', (req, res) => {
     const { email, password } = req.body;
-    try {
-        let user = await User.findOne({ email });
+    User.findOne({ email }).then(async (user) => {
         if (user) return res.redirect('/register');
         const hashedPassword = await bcrypt.hash(password, 10);
-        user = new User({ email, password: hashedPassword });
-        await user.save();
+        const newUser = new User({ email, password: hashedPassword });
+        await newUser.save();
 
-        req.login(user, (err) => {
+        req.login(newUser, (err) => {
             if (err) throw err;
             return res.redirect('/dashboard');
         });
-    } catch (err) {
+    }).catch(err => {
         console.error("Registration Error:", err);
         res.redirect('/register');
-    }
+    });
 });
 
 // Login POST
@@ -140,7 +161,7 @@ app.post('/login', (req, res, next) => {
 app.post('/profile',
     isAuthenticated,
     [
-        body('name').trim().isAlpha('en-US', {ignore: ' '}).isLength({ min: 3, max: 50 }),
+        body('name').trim().isAlpha('en-US', { ignore: ' ' }).isLength({ min: 3, max: 50 }),
         body('email').isEmail(),
         body('bio').isLength({ max: 500 }).matches(/^[a-zA-Z0-9\s.,!?'-]*$/)
     ],
@@ -167,15 +188,17 @@ app.post('/profile',
 
 // Logout
 app.get('/logout', (req, res, next) => {
-    req.logout(function(err) {
+    req.logout(function (err) {
         if (err) return next(err);
         res.redirect('/login');
     });
 });
 
+// Middleware to check auth
 function isAuthenticated(req, res, next) {
     if (req.isAuthenticated()) return next();
     res.redirect('/login');
 }
 
+// Start server
 app.listen(PORT, () => console.log(`🚀 Server running on http://localhost:${PORT}`));
