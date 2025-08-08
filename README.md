@@ -9,7 +9,7 @@ It focuses on safe user registration, login, input validation, and basic encrypt
 
 ## 1. Clone the repository
 
-git clone https://github.com/your-username/secure-dashboard.git
+git clone 
 cd secure-dashboard
 
 
