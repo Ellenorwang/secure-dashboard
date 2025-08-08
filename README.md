@@ -26,19 +26,4 @@ PORT=3000
 npm start
 The application will be available at http://localhost:3000
 
-### Security Practices
-Input Validation: Used express-validator to check and sanitize name, email, and bio inputs.
 
-Output Encoding: Escaped user-provided values before displaying to prevent XSS.
-
-Encryption: Passwords are hashed with bcrypt. Sensitive text fields are encrypted before storing in the database.
-
-Dependency Management: Used npm audit and npm outdated to check for vulnerabilities and updates 
-. env and node_modules are excluded from version control.
-
-Lessons Learned
-Fixed session handling issues by properly destroying sessions on logout.
-
-Solved hashing problems by ensuring correct salt rounds for bcrypt.
-
-Learned the importance of running npm audit early to avoid using vulnerable package
